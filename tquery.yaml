@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: tempo-query
+  name: tempo-query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: tempo-query
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: tempo-query
+    spec:
+      containers:
+        - args:
+            - --grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml
+          image: grafana/tempo-query:0.7.0
+          name: tempo-query
+          ports:
+            - containerPort: 16686
+          resources: {}
+          volumeMounts:
+            - mountPath: /etc/tempo-query.yaml
+              name: tempo-query-claim0
+      restartPolicy: Always
+      volumes:
+        - name: tempo-query-claim0
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/etc/tempo-query.yaml
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: tempo-query
+  name: tempo-query
+spec:
+  ports:
+    - name: "16686"
+      port: 16686
+      targetPort: 16686
+  selector:
+    io.kompose.service: tempo-query
+status:
+  loadBalancer: {}

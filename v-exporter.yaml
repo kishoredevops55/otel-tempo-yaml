@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: volume-exporter
+  name: volume-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: volume-exporter
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: volume-exporter
+    spec:
+      containers:
+        - args:
+            - --volume-dir=tempo:/tmp/tempo
+            - --volume-dir=logs:/app/logs
+            - --volume-dir=loki:/tmp/loki
+          image: mnadeem/volume_exporter
+          name: volume-exporter
+          ports:
+            - containerPort: 9888
+          resources: {}
+          volumeMounts:
+            - mountPath: /app/logs
+              name: volume-exporter-claim0
+            - mountPath: /tmp/tempo
+              name: volume-exporter-claim1
+            - mountPath: /tmp/loki
+              name: volume-exporter-claim2
+      restartPolicy: Always
+      volumes:
+        - name: volume-exporter-claim0
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/data/logs
+        - name: volume-exporter-claim1
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/data/tempo-data
+        - name: volume-exporter-claim2
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/data/loki-data
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: volume-exporter
+  name: volume-exporter
+spec:
+  ports:
+    - name: "9889"
+      port: 9889
+      targetPort: 9888
+  selector:
+    io.kompose.service: volume-exporter
+status:
+  loadBalancer: {}

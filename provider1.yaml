@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: provider1-db
+  name: provider1-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: provider1-db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: provider1-db
+    spec:
+      containers:
+        - 
+          env:
+            - name: POSTGRES_DB
+              value: provider1
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgrespassword
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          image: postgres
+          name: provider1-db
+          ports:
+            - containerPort: 5432
+          resources: {}
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: provider-claim0
+              mountPath: /docker-entrypoint-initdb.d/init.sql
+            - name: provider-claim1
+              mountPath: /var/lib/postgresql/
+      volumes:
+        - name: provider-claim0
+          hostPath:
+            path: /root/boot-opentelemetry-tempo//boot-otel-tempo-provider1/db/scripts/init.sql  
+        - name: provider-claim1
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/boot-otel-tempo-provider1/db/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: provider1-db
+  name: provider1-db
+spec:
+  ports:
+    - name: "5432"
+      port: 5432
+      targetPort: 5432
+  selector:
+    io.kompose.service: provider1-db
+status:
+  loadBalancer: {}

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: promtail
+  name: promtail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: promtail
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: promtail
+    spec:
+      containers:
+        - args:
+            - -config.file=/etc/promtail/promtail-local.yaml
+          image: grafana/promtail:2.2.0
+          name: promtail
+          resources: {}
+          volumeMounts:
+            - mountPath: /etc/promtail/promtail-local.yaml
+              name: promtail-claim0
+            - mountPath: /app/logs
+              name: promtail-claim1
+      restartPolicy: Always
+      volumes:
+        - name: promtail-claim0
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/etc/promtail-local.yaml
+        - name: promtail-claim1
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/data/logs
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    move2kube.konveyor.io/service: promtail
+  name: promtail
+spec:
+  clusterIP: None
+  selector:
+    move2kube.konveyor.io/service: promtail
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}

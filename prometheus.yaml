@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: prometheus
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: prometheus
+    spec:
+      containers:
+        - command:
+            - /bin/prometheus
+            - --config.file=/etc/prometheus.yaml
+          image: prom/prometheus:latest
+          name: prometheus
+          ports:
+            - containerPort: 9090
+          resources: {}
+          volumeMounts:
+            - mountPath: /etc/prometheus.yaml
+              name: prometheus-claim0
+      restartPolicy: Always
+      volumes:
+        - name: prometheus-claim0
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/etc/prometheus.yaml
+              
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: prometheus
+  name: prometheus
+spec:
+  ports:
+    - name: "9090"
+      port: 9090
+      targetPort: 9090
+  selector:
+    io.kompose.service: prometheus
+status:
+  loadBalancer: {}

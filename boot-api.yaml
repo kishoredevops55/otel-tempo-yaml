@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: boot-otel-tempo-api
+  name: boot-otel-tempo-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: boot-otel-tempo-api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: boot-otel-tempo-api
+    spec:
+      containers:
+        - env:
+            - name: PROVIDER1_URL_BASE
+              value: http://boot-otel-tempo-provider1:8090
+          image: kisaron5/otel-tempo-api:v1
+          name: boot-otel-tempo-api
+          ports:
+            - containerPort: 9080
+          resources: {}
+          volumeMounts:
+            - mountPath: /app/logs
+              name: boot-otel-tempo-api-claim0
+      restartPolicy: Always
+      volumes:
+        - name: boot-otel-tempo-api-claim0
+          hostPath:
+            path: /root/boot-opentelemetry-tempo/data/logs
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: boot-otel-tempo-api
+  name: boot-otel-tempo-api
+spec:
+  ports:
+    - name: "9080"
+      port: 9080
+      targetPort: 9080
+  selector:
+    io.kompose.service: boot-otel-tempo-api
+status:
+  loadBalancer: {}
